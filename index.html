@@ -2,11 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Sugar Kane Rhythm Game</title>
+  <title>Sugar Kane 30s Demo</title>
   <style>
     body { margin: 0; background: black; overflow: hidden; font-family: monospace; }
     video {
-      position: fixed; top: 0; left: 0;
+      position: fixed;
+      top: 0; left: 0;
       width: 100%; height: 100%;
       object-fit: cover;
       z-index: -1;
@@ -14,31 +15,33 @@
     }
     canvas {
       display: block;
-      margin: auto;
+      margin: 100px auto 0 auto;
       background: rgba(0, 0, 0, 0.2);
-      z-index: 1;
       position: relative;
+      z-index: 1;
     }
-    #score { position: absolute; top: 10px; left: 10px; color: white; z-index: 3; }
-    #startBtn { position: absolute; top: 20px; right: 20px; z-index: 3; }
+    #score, #startBtn, #effectText {
+      position: absolute; z-index: 3;
+    }
+    #score { top: 10px; left: 10px; color: white; }
+    #startBtn { top: 20px; right: 20px; font-size: 16px; }
     #effectText {
-      position: absolute;
-      left: 50%; top: 40%;
+      left: 50%; top: 45%;
       transform: translate(-50%, -50%);
-      color: white; font-size: 48px;
+      font-size: 48px; font-weight: bold;
+      color: white; opacity: 0;
       text-shadow: 0 0 10px white;
-      opacity: 0; z-index: 3;
       transition: opacity 0.3s ease-out;
     }
   </style>
 </head>
 <body>
 
-<video id="bgVideo" muted autoplay loop playsinline>
+<video id="bgVideo" muted loop playsinline>
   <source src="Sonic Youth - Sugar Kane.mp4" type="video/mp4">
 </video>
 
-<audio id="bgMusic" src="Sonic Youth - Sugar Kane.mp3"></audio>
+<audio id="bgMusic" src="Sugar Kane - Sonic Youth.mp3"></audio>
 
 <canvas id="gameCanvas" width="600" height="700"></canvas>
 <div id="score">Score: 0</div>
@@ -48,22 +51,31 @@
 <script>
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
-const audio = document.getElementById("bgMusic");
-const video = document.getElementById("bgVideo");
 const keys = ['a', 's', 'd', 'k', 'l'];
 const keyX = { a: 80, s: 180, d: 280, k: 380, l: 480 };
-let notes = [], score = 0, keyFlash = {}, gameStarted = false;
-let startTime = null;
+const audio = document.getElementById("bgMusic");
+const video = document.getElementById("bgVideo");
 
-for (let k of keys) keyFlash[k] = 0;
+let notes = [], score = 0, gameStarted = false, startTime = null;
+let keyFlash = { a: 0, s: 0, d: 0, k: 0, l: 0 };
+
 const hitSound = new Audio("hit_noise.wav");
 hitSound.volume = 0.5;
 
-for (let i = 0; i < 30; i++) {
-  const key = keys[i % keys.length];
-  const time = 2 + i * 0.75;
-  notes.push({ key, time, hit: false });
-}
+// Sample 30s note pattern using Songsterr intro rhythm idea
+const basePattern = [
+  { time: 2.0, key: 'a' }, { time: 2.5, key: 's' }, { time: 3.0, key: 'd' },
+  { time: 4.0, key: 'k' }, { time: 4.5, key: 'l' }, { time: 5.0, key: 'a' },
+  { time: 6.5, key: 's' }, { time: 7.0, key: 'd' }, { time: 8.0, key: 'k' },
+  { time: 8.5, key: 'l' }, { time: 9.0, key: 'a' }, { time: 10.0, key: 's' },
+  { time: 11.5, key: 'd' }, { time: 12.0, key: 'k' }, { time: 13.0, key: 'l' },
+  { time: 14.5, key: 'a' }, { time: 15.0, key: 's' }, { time: 16.5, key: 'd' },
+  { time: 17.0, key: 'k' }, { time: 18.0, key: 'l' }, { time: 19.0, key: 'a' },
+  { time: 20.5, key: 's' }, { time: 21.5, key: 'd' }, { time: 23.0, key: 'k' },
+  { time: 24.0, key: 'l' }, { time: 25.5, key: 'a' }, { time: 27.0, key: 's' }
+];
+
+notes = basePattern.map(n => ({ ...n, hit: false }));
 
 function updateScore() {
   document.getElementById("score").innerText = `Score: ${score}`;
@@ -79,16 +91,11 @@ function showEffectText(text) {
 function drawHitLine() {
   ctx.font = "16px monospace";
   for (let key of keys) {
-    if (keyFlash[key] > 0) {
-      ctx.fillStyle = `rgba(255,255,255,${keyFlash[key]})`;
-      ctx.fillRect(keyX[key], canvas.height - 100, 40, 10);
-      keyFlash[key] -= 0.08;
-    } else {
-      ctx.fillStyle = "gray";
-      ctx.fillRect(keyX[key], canvas.height - 100, 40, 10);
-    }
+    ctx.fillStyle = keyFlash[key] > 0 ? `rgba(255,255,255,${keyFlash[key]})` : "gray";
+    ctx.fillRect(keyX[key], canvas.height - 100, 40, 10);
     ctx.fillStyle = "white";
     ctx.fillText(key.toUpperCase(), keyX[key] + 12, canvas.height - 70);
+    if (keyFlash[key] > 0) keyFlash[key] -= 0.08;
   }
 }
 
@@ -137,12 +144,11 @@ function startGame() {
   gameStarted = true;
   audio.currentTime = 0;
   video.currentTime = 0;
-  audio.play().catch(e => console.warn("audio error", e));
-  video.play().catch(e => console.warn("video error", e));
+  audio.play().catch(e => console.warn("Audio error:", e));
+  video.play().catch(e => console.warn("Video error:", e));
   startTime = performance.now();
   requestAnimationFrame(gameLoop);
 }
 </script>
 </body>
 </html>
-
