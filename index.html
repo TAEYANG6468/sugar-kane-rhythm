@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Sugar Kane 30s Demo</title>
+  <meta charset="UTF-8">
+  <title>Sugar Kane - Riff-Based Full Version</title>
   <style>
     body { margin: 0; background: black; overflow: hidden; font-family: monospace; }
     video {
-      position: fixed;
-      top: 0; left: 0;
+      position: fixed; top: 0; left: 0;
       width: 100%; height: 100%;
       object-fit: cover;
       z-index: -1;
@@ -15,7 +14,7 @@
     }
     canvas {
       display: block;
-      margin: 100px auto 0 auto;
+      margin: 120px auto 0 auto;
       background: rgba(0, 0, 0, 0.2);
       position: relative;
       z-index: 1;
@@ -26,11 +25,11 @@
     #score { top: 10px; left: 10px; color: white; }
     #startBtn { top: 20px; right: 20px; font-size: 16px; }
     #effectText {
-      left: 50%; top: 45%;
+      left: 50%; top: 40%;
       transform: translate(-50%, -50%);
-      font-size: 48px; font-weight: bold;
-      color: white; opacity: 0;
+      color: white; font-size: 48px;
       text-shadow: 0 0 10px white;
+      opacity: 0;
       transition: opacity 0.3s ease-out;
     }
   </style>
@@ -56,29 +55,28 @@ const keyX = { a: 80, s: 180, d: 280, k: 380, l: 480 };
 const audio = document.getElementById("bgMusic");
 const video = document.getElementById("bgVideo");
 
-let notes = [], score = 0, gameStarted = false, startTime = null;
+let score = 0, startTime = null, gameStarted = false;
 let keyFlash = { a: 0, s: 0, d: 0, k: 0, l: 0 };
-
 const hitSound = new Audio("hit_noise.wav");
-hitSound.volume = 0.5;
+hitSound.volume = 0.4;
 
-// Sample 30s note pattern using Songsterr intro rhythm idea
-const basePattern = [
-  { time: 2.0, key: 'a' }, { time: 2.5, key: 's' }, { time: 3.0, key: 'd' },
-  { time: 4.0, key: 'k' }, { time: 4.5, key: 'l' }, { time: 5.0, key: 'a' },
-  { time: 6.5, key: 's' }, { time: 7.0, key: 'd' }, { time: 8.0, key: 'k' },
-  { time: 8.5, key: 'l' }, { time: 9.0, key: 'a' }, { time: 10.0, key: 's' },
-  { time: 11.5, key: 'd' }, { time: 12.0, key: 'k' }, { time: 13.0, key: 'l' },
-  { time: 14.5, key: 'a' }, { time: 15.0, key: 's' }, { time: 16.5, key: 'd' },
-  { time: 17.0, key: 'k' }, { time: 18.0, key: 'l' }, { time: 19.0, key: 'a' },
-  { time: 20.5, key: 's' }, { time: 21.5, key: 'd' }, { time: 23.0, key: 'k' },
-  { time: 24.0, key: 'l' }, { time: 25.5, key: 'a' }, { time: 27.0, key: 's' }
-];
-
-notes = basePattern.map(n => ({ ...n, hit: false }));
+// Guitar riff-based full note map (approximate based on Songsterr)
+let notes = [
+  { key: 'a', time: 2.0 }, { key: 's', time: 2.3 }, { key: 'd', time: 2.6 },
+  { key: 'a', time: 3.2 }, { key: 's', time: 3.5 }, { key: 'd', time: 3.8 },
+  { key: 'k', time: 4.1 }, { key: 'l', time: 4.4 },
+  { key: 'a', time: 5.0 }, { key: 's', time: 5.3 }, { key: 'd', time: 5.6 },
+  { key: 'a', time: 6.0 }, { key: 's', time: 6.3 }, { key: 'd', time: 6.6 },
+  { key: 'k', time: 7.0 }, { key: 'l', time: 7.3 },
+  { key: 'a', time: 8.0 }, { key: 's', time: 8.3 }, { key: 'd', time: 8.6 },
+  { key: 'a', time: 9.2 }, { key: 's', time: 9.5 }, { key: 'd', time: 9.8 },
+  { key: 'k', time: 10.2 }, { key: 'l', time: 10.5 },
+  { key: 'a', time: 11.0 }, { key: 's', time: 11.3 }, { key: 'd', time: 11.6 },
+  { key: 'k', time: 12.0 }, { key: 'l', time: 12.3 }
+].map(n => ({ ...n, hit: false }));
 
 function updateScore() {
-  document.getElementById("score").innerText = `Score: ${score}`;
+  document.getElementById("score").textContent = `Score: ${score}`;
 }
 
 function showEffectText(text) {
@@ -109,23 +107,14 @@ function drawNotes(time) {
   }
 }
 
-function gameLoop(timestamp) {
-  if (!startTime) startTime = timestamp;
-  const currentTime = (timestamp - startTime) / 1000;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawHitLine();
-  drawNotes(currentTime);
-  requestAnimationFrame(gameLoop);
-}
-
 document.addEventListener("keydown", e => {
   if (!gameStarted) return;
   const key = e.key.toLowerCase();
   if (!keys.includes(key)) return;
-  const time = (performance.now() - startTime) / 1000;
+  const t = (performance.now() - startTime) / 1000;
   for (let note of notes) {
     if (note.hit || note.key !== key) continue;
-    const y = canvas.height - ((note.time - time) * 300);
+    const y = canvas.height - ((note.time - t) * 300);
     if (Math.abs(y - (canvas.height - 100)) < 50) {
       note.hit = true;
       keyFlash[key] = 1;
@@ -138,6 +127,15 @@ document.addEventListener("keydown", e => {
     }
   }
 });
+
+function gameLoop(timestamp) {
+  if (!startTime) startTime = timestamp;
+  const currentTime = (timestamp - startTime) / 1000;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawHitLine();
+  drawNotes(currentTime);
+  requestAnimationFrame(gameLoop);
+}
 
 function startGame() {
   if (gameStarted) return;
